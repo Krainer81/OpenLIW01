@@ -42,3 +42,10 @@ Do not publish by default:
 - credentials or private evidence archives.
 
 Use the product/manufacturer names only descriptively and include an unaffiliated/trademark notice.
+
+
+## OpenLIW01 license
+
+The independently authored content published in this repository is licensed under **GNU GPL v3.0 only (GPL-3.0-only)**. This licensing choice concerns the project's own published source and documentation. It does not license third-party trademarks, omitted vendor firmware, or other third-party material that is outside the repository.
+
+GPL licensing of the independent implementation does not by itself determine whether every possible reverse-engineering activity is lawful; the publication boundary described above remains intentional.

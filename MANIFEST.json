@@ -1,5 +1,6 @@
 {
-  "generated": "2026-09-06",
+  "generated": "2026-09-08",
+  "license": "GPL-3.0-only",
   "files": [
     {
       "path": ".gitignore",
@@ -8,28 +9,28 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 790,
-      "sha256": "5b25fae6a5f92f854750f0495b2a47b991ffb485b212bf305654a1d6bda55418"
+      "bytes": 1091,
+      "sha256": "80496630a074da7b1163032a84248cf7d6c5c324edd734ab8fca0d1281612376"
     },
     {
-      "path": "LICENSE-TODO.md",
-      "bytes": 454,
-      "sha256": "85c46a08b47b9984958133959cb7023de099826ad036852f4e84e223bfbe7282"
+      "path": "LICENSE",
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
     },
     {
       "path": "NOTICE.md",
-      "bytes": 461,
-      "sha256": "74705f7a0b5966090ff0489caf3c1a01e3301fdaee0d8fd6665e97676215976f"
+      "bytes": 753,
+      "sha256": "570efa60a5cbda1d6e4a166360e4c31e4b3026c660230850d41f7a80a017ee16"
     },
     {
       "path": "README.md",
-      "bytes": 5008,
-      "sha256": "dc293c9736393d32afce25b73d4a82c38f5cf883a1ccfed6aa8ff63b8ce98e4d"
+      "bytes": 5172,
+      "sha256": "2f48e5bdf2522ab739b712b7ed9670c54b125f64d1106411db480741802eaaf5"
     },
     {
       "path": "README_CZ.md",
-      "bytes": 923,
-      "sha256": "70053591d92fc8c39b71844bd1b96d638b7afd1f1b6d713cae03ff59e8a95612"
+      "bytes": 1375,
+      "sha256": "e16fed4d9f2f1b762164d1c3088c7de3ddbd75a76f257e342ad8efa7f5bdf0c3"
     },
     {
       "path": "docs/ARCHITECTURE.md",
@@ -43,8 +44,8 @@
     },
     {
       "path": "docs/LEGAL_NOTES.md",
-      "bytes": 3120,
-      "sha256": "5966a09a4dd147bd30e7bff755fb6a547aa0bedb7ce831cede03810feeb56e11"
+      "bytes": 3683,
+      "sha256": "b5890a4c6c0687a035d1b10eaee82e6fcf90368da66f1acd80326aed4fe3a015"
     },
     {
       "path": "docs/PUBLICATION_SCOPE.md",

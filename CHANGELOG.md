@@ -1,5 +1,10 @@
 # Changelog
 
+## Repository licensing — 2026-09-08
+- Selected GNU General Public License v3.0 only (`GPL-3.0-only`) for independently authored OpenLIW01 content.
+- Added full `LICENSE` text and removed `LICENSE-TODO.md`.
+- Firmware source files are otherwise unchanged from the V0.5.2 RC3 publication candidate.
+
 ## V0.5.2 RC3 — 2026-09-06
 - Final colorful embedded web UI polish.
 - Reset/reconnect-aware frontend states.

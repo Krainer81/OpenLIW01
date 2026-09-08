@@ -2,7 +2,7 @@
 
 Unofficial, independent ESPHome replacement firmware for the **ZAMEL LIW-01** water-meter interface hardware.
 
-Current public candidate: **V0.5.2 RC3**. The project is intended for owners of compatible hardware who want local operation, Home Assistant integration, persistent metering, a guarded local-service button, and an embedded local web UI.
+Current release: **V0.5.2 RC3**. The project is intended for owners of compatible hardware who want local operation, Home Assistant integration, persistent metering, a guarded local-service button, and an embedded local web UI.
 
 > **Unaffiliated project.** ZAMEL, SUPLA and related names/trademarks belong to their respective owners. This repository is not endorsed by or affiliated with them.
 
@@ -73,4 +73,6 @@ See [`docs/LEGAL_NOTES.md`](docs/LEGAL_NOTES.md). This is project documentation,
 
 ## License
 
-No public open-source license has been selected yet. Until a `LICENSE` file is intentionally added, normal copyright defaults apply. Choose a license only after deciding how you want third parties to use and redistribute the independent code.
+The independently authored OpenLIW01 project content in this repository is released under the **GNU General Public License v3.0 only (GPL-3.0-only)**. See [`LICENSE`](LICENSE).
+
+This license applies to the independently authored material in this repository. It does not grant rights in third-party trademarks, vendor names, omitted vendor firmware, or other third-party material that is not part of this repository.
