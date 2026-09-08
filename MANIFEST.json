@@ -1,0 +1,100 @@
+{
+  "generated": "2026-09-06",
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 243,
+      "sha256": "347e085a9a2599fe8c82b2018cc5706519e37c0628fcc3ac61b4d2e231bb554f"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 790,
+      "sha256": "5b25fae6a5f92f854750f0495b2a47b991ffb485b212bf305654a1d6bda55418"
+    },
+    {
+      "path": "LICENSE-TODO.md",
+      "bytes": 454,
+      "sha256": "85c46a08b47b9984958133959cb7023de099826ad036852f4e84e223bfbe7282"
+    },
+    {
+      "path": "NOTICE.md",
+      "bytes": 461,
+      "sha256": "74705f7a0b5966090ff0489caf3c1a01e3301fdaee0d8fd6665e97676215976f"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5008,
+      "sha256": "dc293c9736393d32afce25b73d4a82c38f5cf883a1ccfed6aa8ff63b8ce98e4d"
+    },
+    {
+      "path": "README_CZ.md",
+      "bytes": 923,
+      "sha256": "70053591d92fc8c39b71844bd1b96d638b7afd1f1b6d713cae03ff59e8a95612"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 1240,
+      "sha256": "f519c32e44880383eaabd80ac3850551ba70d6dfe4d1a920134f709304559b84"
+    },
+    {
+      "path": "docs/HARDWARE_INTERFACE.md",
+      "bytes": 797,
+      "sha256": "4ee7dd8fa5a2b4135ccbfd272786cf282b216eed89f7e5890822042e5f814d70"
+    },
+    {
+      "path": "docs/LEGAL_NOTES.md",
+      "bytes": 3120,
+      "sha256": "5966a09a4dd147bd30e7bff755fb6a547aa0bedb7ce831cede03810feeb56e11"
+    },
+    {
+      "path": "docs/PUBLICATION_SCOPE.md",
+      "bytes": 776,
+      "sha256": "a9b687420a9f57eeb72005ce1fa99c4af14512a56fbac7ad06cbf970fba62628"
+    },
+    {
+      "path": "docs/SAFETY.md",
+      "bytes": 809,
+      "sha256": "b25b71dbd127c12bb6493660f5744ec4357d2baad49bba3cd6d0ac92f6fdc382"
+    },
+    {
+      "path": "docs/VALIDATION.md",
+      "bytes": 1537,
+      "sha256": "c7ec9120c929edcd84f1b9d1e4c61cffd37bd296e8a4b412ea176f602db1a6aa"
+    },
+    {
+      "path": "firmware/components/liw01_counter_v030/__init__.py",
+      "bytes": 569,
+      "sha256": "8ebc5571b6e9206401940075206e2941aea3efbc3d93bf6a341695decbe91aea"
+    },
+    {
+      "path": "firmware/components/liw01_counter_v030/liw01_counter.cpp",
+      "bytes": 73986,
+      "sha256": "f7bf22c119ab1449fab6b412079bb3e3a4104c4a2e459680bbe56bf7ae296402"
+    },
+    {
+      "path": "firmware/components/liw01_counter_v030/liw01_counter.h",
+      "bytes": 16936,
+      "sha256": "76b14885b83759259b644c672f5e4e03b76fffddd141acf3b47a9df5b6f18066"
+    },
+    {
+      "path": "firmware/liw01-analyzer.yaml",
+      "bytes": 41634,
+      "sha256": "02df5939d9d2a8b2668030068e63fb1a87e3d35ad1456caab234eee2fa1ae132"
+    },
+    {
+      "path": "firmware/liw01_web.css",
+      "bytes": 7529,
+      "sha256": "86700d538affbf44ccc53e1d7e657da0a102938af7c2e57b8ce2678c0a9a1404"
+    },
+    {
+      "path": "firmware/liw01_web.js",
+      "bytes": 21621,
+      "sha256": "ae721c9baf7349399be7ee5e94161802383cfcb951216b70f4afbe0a41187d64"
+    },
+    {
+      "path": "firmware/secrets.example.yaml",
+      "bytes": 498,
+      "sha256": "db9a31e4676cf62871057eb08bbd4415d14068a81444f8dc5d0111b82f598391"
+    }
+  ]
+}

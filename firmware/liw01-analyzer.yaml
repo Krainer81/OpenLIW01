@@ -1,0 +1,1197 @@
+# CHANGE INDEX
+# 2026-08-27 V0.2.0 - production TOTAL, FRAM V2 A/B persistence, 221000 L approximate baseline.
+#                         Counting uses validated HC590 raw modulo deltas; raw 255 is accepted.
+# 2026-08-27 V0.2.1 - startup-clear field recovery after real 105->0->1 signature; guarded APPLY/ADOPT,
+#                         one-shot stale-output watch and reject-log rate limiting.
+# 2026-08-27 V0.2.2 - fixes V0.2.1 post-APPLY stale-watch gate; first reset-signature pulse can recover even
+#                         after APPLY. Adds guarded one-time +2 L repair for the exact 2026-08-27 V0.2.1 field log.
+# 2026-08-27 V0.2.3 - removes operational APPLY/ADOPT/repair buttons; startup is automatic and conservative.
+#                         Automatically migrates the proven V0.2.1 missed +2 L once using persistent FRAM markers.
+# 2026-08-29 V0.2.4 - production cleanup only: HA entity metadata/visibility + standard ESPHome restart button.
+#                         Golden V0.2.3 C++ counter component is byte-for-byte unchanged; no counter/FRAM/startup/timing change.
+# 2026-08-29 V0.3.0 - SERVICE LAYER RC1: explicit two-step SET TOTAL and guarded RESET COUNTER.
+#                         Normal V0.2.3 count/startup path and FRAM V2 layout remain unchanged; service actions rebaseline raw,
+#                         preserve exact Since-V0.2 on SET, write both V2 generations, and never clear HC590.
+# 2026-08-30 V0.3.1 - HA CLEANUP: deep hardware/reverse-engineering diagnostics are internal-only.
+#                         Keeps normal user, health, service and restart entities; C++ counter/FRAM/service core unchanged.
+# 2026-08-31 V0.3.3 RC1 - AUTHENTICATED LOCAL WEB UI foundation over V0.3.1.
+#                         ESPHome web_server v3, Digest auth, local assets, web OTA disabled, internal entities hidden.
+#                         Existing SET TOTAL service remains two-step. RESET COUNTER now requires a separate 30 s ARM switch.
+#                         GPIO5 is NOT configured/used. V0.2.3 golden counter/FRAM/startup C++ core remains byte-identical.
+# 2026-08-31 V0.3.4 RC1 - WEB UI GROUPING/CLEANUP only.
+#                         Uses web_server v3 sorting_groups to separate Consumption / Health / Service.
+#                         Adds web-only sorting metadata to intended visible entities; HA names/IDs and service logic unchanged.
+#                         GPIO5 remains BLOCKED/unused. V0.2.3 golden counter/FRAM/startup C++ core remains byte-identical.
+# 2026-08-31 V0.4.0 RC1 - CONSOLIDATED FEATURE BUNDLE.
+#                         One larger integration step to reduce field-test overhead.
+#                         Active: authenticated grouped web UI, persistent display scaling (impulses/liter),
+#                         guarded local-config reset that preserves external FRAM TOTAL, existing SET TOTAL / RESET guards.
+#                         Prepared but DEFAULT OFF: optional MQTT writable layer and GPIO5 observation-only block.
+#                         GPIO5 remains electrically BLOCKED; prepared GPIO5 block is fully commented and MUST NOT be enabled
+#                         before separate HW forensic work. Golden V0.2.3 counter/FRAM/startup C++ remains byte-identical.
+# 2026-08-31 V0.4.0 RC2 - LOCAL CONFIG RESET GUARD FIX.
+#                         RC1 evidence exposed a YAML automation bug: `return` inside a lambda does not stop later actions,
+#                         so the internal factory_reset action still executed when ARM was OFF.
+#                         RC2 replaces that sequence with a real ESPHome `if` action wrapping the factory_reset press.
+#                         No C++ / counter / FRAM / scaling / web / MQTT / GPIO5 logic changed.
+# 2026-09-05 V0.5.0 - FINAL GPIO5 LOCAL SERVICE STATE MACHINE.
+#                         Based on V0.4.0 RC2 FIELD PASS + V0.4.2 RC2 GPIO5 legacy-input FIELD PASS.
+#                         GPIO5 active LOW, internal pull-up ON, use_interrupt=true, 50 ms debounce.
+#                         Release-only bands: <0.20 s IGNORED; 0.20..<4 s SHORT; 4..<8 s CONFIG;
+#                         8..<15 s NETWORK; >=15 s FACTORY.
+#                         SHORT = status/diagnostic only, no reboot/write.
+#                         CONFIG = normal ESP restart after release (1.5 s delay for state publication).
+#                         NETWORK = Wi-Fi radio reconnect only: OFF 5 s -> ON; no ESP reboot.
+#                         FACTORY = ARM ONLY on long-hold release; a second SHORT within 10 s confirms
+#                         ESPHome local preference factory reset. External FRAM TOTAL is never cleared.
+#                         Any non-SHORT press while factory confirmation is pending cancels it.
+#                         Factory confirmation is additionally refused unless FRAM V2 is ready,
+#                         last persist is OK and unsaved delta is zero.
+#                         GPIO5 NEVER calls RESET COUNTER and never clears HC590.
+#                         No destructive action occurs on boot or while the button is held.
+# 2026-09-06 V0.5.1 RC1 - UI + TELEMETRY CLEANUP, YAML/WEB ONLY.
+#                         Golden counter/FRAM C++ and V0.5.0 GPIO5 state machine are unchanged.
+#                         Web v3 remains local/authenticated/log-off/OTA-off; adds tiny local CSS only, NO custom JS.
+#                         Web groups: Spotreba / Stav zarizeni / Lokalni tlacitko / Servis.
+#                         Adds one 5 s System health summary.
+#                         Reduces HA/API publication cadence and internalizes obvious duplicate/deep diagnostics.
+#                         Hardware measurement stays at 100 ms; only publication/display cadence changes.
+# 2026-09-06 V0.5.2 RC1 - CUSTOM LIGHTWEIGHT COLOR FRONTEND.
+#                         Counter/FRAM C++, GPIO5 state machine, entities and telemetry cadence are unchanged.
+#                         Replaces the stock Lit v3 frontend with a small local vanilla-JS frontend served as /0.js.
+#                         Uses the same ESPHome v3 SSE/REST backend; no external assets, framework, charts or animation.
+#                         css_include=/0.css + js_include=/0.js; remote CSS/JS URLs are explicitly empty.
+#                         Goal: clearly colored product-like UI while keeping ESP8266 web payload small and isolated.
+# 2026-09-06 V0.5.2 RC2 - CUSTOM FRONTEND STATE DISCOVERY FIX.
+#                         RC1 UI loaded but values stayed empty because it incorrectly waited for a non-existent
+#                         `state_detail_all` SSE event. ESPHome v3 sends both detail and update payloads as `state`.
+#                         RC2 handles `state` exactly like stock v3: detail payloads (name+domain) are added directly;
+#                         unknown compact states are resolved through a throttled same-origin ?detail=all GET queue.
+#                         Also aligns new-format REST action URLs with stock v3 entity.name/device behavior.
+#                         No counter/FRAM/GPIO5/entity/telemetry change.
+# 2026-09-06 V0.5.2 RC3 - FINAL UI POLISH + RESET-AWARE FRONTEND.
+#                         Presentation/web-only change over RC2 FIELD PASS.
+#                         Fixes status colors (DISARMED is SAFE; faults=0 is clean), human-readable uptime,
+#                         Wi-Fi quality coloring, cleaner product subtitle and collapsible FRAM detail.
+#                         During initial boot/reconnect/factory-reset reboot the already loaded page explicitly shows
+#                         INITIALIZACE / OBNOVA and explains that the UI remains embedded in firmware.
+#                         Firmware-embedded JS/CSS survives ESPHome factory reset; external FRAM TOTAL is untouched.
+#                         No counter/FRAM/GPIO5/entity/telemetry cadence change.
+
+substitutions:
+  device_name: zamel-liw01
+  friendly_name: "ZAMEL LIW-01"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: "LIW-01 V0.5.2 CUSTOM COLOR WEB RC3; final UI polish + reset-aware frontend; core/GPIO5 preserved"
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(liw01_service_target_total).publish_state((float) id(liw01_hw).get_total_liters());
+          id(liw01_gpio5_factory_confirm_pending) = false;
+          id(liw01_gpio5_last_hold_ms) = 0;
+          id(liw01_gpio5_last_band_code) = 0;
+          id(liw01_gpio5_last_band).publish_state("IDLE");
+          id(liw01_gpio5_last_action).publish_state("IDLE");
+
+esp8266:
+  board: esp_wroom_02
+  early_pin_init: false
+  restore_from_flash: false
+
+# GPIO1 and GPIO3 belong to LIW-01 counter hardware. UART0 MUST stay disabled.
+logger:
+  baud_rate: 0
+  level: INFO
+
+api:
+  reboot_timeout: 0s
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  manual_ip:
+    static_ip: 192.168.1.164
+    gateway: !secret wifi_gateway
+    subnet: !secret wifi_subnet
+
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret fallback_ap_password
+
+  on_connect:
+    - switch.turn_on: liw01_wifi_green_led
+  on_disconnect:
+    - switch.turn_off: liw01_wifi_green_led
+
+captive_portal:
+
+# V0.3.3 RC1 local authenticated web UI.
+# V0.4.0 deliberately keeps the FIELD-PASSED credential behavior:
+# password = existing ota_password secret, username = "liw01".
+# OPTIONAL dedicated password is prepared as a one-line change:
+#   password: !secret web_server_password
+# after adding web_server_password to secrets.yaml.
+# Keeping ota_password here avoids a new mandatory secret during the bundled field test.
+#
+# Security choices:
+# - Digest auth (password is not sent in reversible Base64 form on each request).
+# - local: true keeps UI assets on the device.
+# - include_internal: false keeps deep reverse-engineering diagnostics hidden.
+# - log: false reduces web-server overhead on ESP8266.
+# - ota: false keeps normal web UI from exposing a firmware upload endpoint.
+web_server:
+  port: 80
+  version: 3
+  css_include: "liw01_web.css"
+  css_url: ""
+  js_include: "liw01_web.js"
+  js_url: ""
+  sorting_groups:
+    - id: web_group_consumption
+      name: "Spotreba"
+      sorting_weight: 10
+    - id: web_group_health
+      name: "Stav zarizeni"
+      sorting_weight: 20
+    - id: web_group_local_button
+      name: "Lokalni tlacitko"
+      sorting_weight: 30
+    - id: web_group_service
+      name: "Servis"
+      sorting_weight: 40
+  compression: gzip
+  include_internal: false
+  log: false
+  ota: false
+  auth:
+    username: "liw01"
+    password: !secret ota_password
+    type: digest
+
+
+# V0.5.0 final local-service state.
+globals:
+  - id: liw01_gpio5_press_started_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+
+  - id: liw01_gpio5_last_hold_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+
+  - id: liw01_gpio5_last_band_code
+    type: uint8_t
+    restore_value: false
+    initial_value: '0'
+
+  - id: liw01_gpio5_factory_confirm_pending
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
+# Confirmed on the real unit: green Wi-Fi/status LED is active LOW on GPIO16.
+switch:
+  - platform: gpio
+    id: liw01_wifi_green_led
+    internal: true
+    pin:
+      number: GPIO16
+      inverted: true
+    restore_mode: ALWAYS_OFF
+
+  # Guard for destructive counter reset from HA or local web.
+  # OFF after every boot and automatically returns OFF after 30 seconds.
+  # It does not call the counter core and is only a YAML/service-layer safety gate.
+  - platform: template
+    name: "Arm RESET COUNTER"
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 50
+    id: liw01_reset_arm
+    entity_category: config
+    icon: "mdi:shield-lock-outline"
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - script.execute: liw01_reset_arm_timeout
+
+  - platform: template
+    name: "Arm LOCAL CONFIG RESET"
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 70
+    id: liw01_local_config_reset_arm
+    entity_category: config
+    icon: "mdi:shield-key-outline"
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - script.execute: liw01_local_config_reset_arm_timeout
+
+script:
+  # Auto-disarm destructive RESET gate. "restart" means re-arming restarts the 30 s window.
+  - id: liw01_reset_arm_timeout
+    mode: restart
+    then:
+      - delay: 30s
+      - switch.turn_off: liw01_reset_arm
+
+  - id: liw01_local_config_reset_arm_timeout
+    mode: restart
+    then:
+      - delay: 30s
+      - switch.turn_off: liw01_local_config_reset_arm
+
+
+  # V0.5.0 local button NETWORK action. This only cycles the Wi-Fi radio;
+  # API reboot_timeout is already 0s and the normal Wi-Fi reboot timeout is far
+  # longer than this deliberate 5 s radio-off interval.
+  - id: liw01_gpio5_wifi_reconnect
+    mode: restart
+    then:
+      - delay: 500ms
+      - wifi.disable:
+      - delay: 5s
+      - wifi.enable:
+
+  # FACTORY long-hold never resets immediately. It only opens this 10 s
+  # confirmation window; timeout is non-destructive.
+  - id: liw01_gpio5_factory_confirm_timeout
+    mode: restart
+    then:
+      - delay: 10s
+      - if:
+          condition:
+            lambda: |-
+              return id(liw01_gpio5_factory_confirm_pending);
+          then:
+            - lambda: |-
+                id(liw01_gpio5_factory_confirm_pending) = false;
+                id(liw01_gpio5_last_action).publish_state("FACTORY_CONFIRM_TIMEOUT");
+                ESP_LOGW("liw01_gpio5", "FACTORY confirmation timed out; no reset executed");
+
+spi:
+  id: liw01_spi
+  clk_pin: GPIO14
+  miso_pin: GPIO12
+  mosi_pin: GPIO13
+  interface: hspi
+
+external_components:
+  - source: components
+
+liw01_counter_v030:
+  id: liw01_hw
+  update_interval: 100ms
+
+sensor:
+  # Primary user-facing absolute meter total. Historical baseline is approximate;
+  # every accepted V0.2 pulse after installation is exact at 1 L / pulse.
+  - platform: template
+    name: "Total consumption"
+    web_server:
+      sorting_group_id: web_group_consumption
+      sorting_weight: 10
+    id: liw01_total_m3
+    unit_of_measurement: "m³"
+    device_class: water
+    state_class: total_increasing
+    accuracy_decimals: 3
+    icon: "mdi:water"
+    update_interval: 2s
+    lambda: |-
+      return id(liw01_hw).get_total_m3();
+
+  - platform: template
+    name: "Total liters"
+    id: liw01_total_liters
+    internal: true
+    unit_of_measurement: "L"
+    device_class: water
+    state_class: total_increasing
+    accuracy_decimals: 0
+    update_interval: 10s
+    lambda: |-
+      return (double) id(liw01_hw).get_total_liters();
+
+  - platform: template
+    name: "Since V0.2"
+    web_server:
+      sorting_group_id: web_group_consumption
+      sorting_weight: 30
+    id: liw01_since_v020
+    unit_of_measurement: "L"
+    state_class: total_increasing
+    accuracy_decimals: 0
+    update_interval: 10s
+    lambda: |-
+      return (double) id(liw01_hw).get_since_v020_liters();
+
+  # Optional display scaling for meter variants that do not use 1 pulse = 1 liter.
+  # Golden counter/FRAM stays in accepted HC590 pulse units. Only these display
+  # sensors use the configurable impulses-per-liter value.
+  - platform: template
+    name: "Scaled total consumption"
+    web_server:
+      sorting_group_id: web_group_consumption
+      sorting_weight: 40
+    id: liw01_scaled_total_m3
+    unit_of_measurement: "m³"
+    device_class: water
+    accuracy_decimals: 3
+    icon: "mdi:water-sync"
+    update_interval: 5s
+    lambda: |-
+      const float ppl = id(liw01_impulses_per_liter).state;
+      if (isnan(ppl) || ppl <= 0.0f)
+        return NAN;
+      const double baseline_l = (double) id(liw01_hw).get_install_baseline_liters();
+      const double post_v020_pulses = (double) id(liw01_hw).get_since_v020_liters();
+      return (baseline_l + (post_v020_pulses / (double) ppl)) / 1000.0;
+
+  - platform: template
+    name: "Scaled since V0.2"
+    id: liw01_scaled_since_v020
+    internal: true
+    unit_of_measurement: "L"
+    accuracy_decimals: 3
+    icon: "mdi:counter"
+    update_interval: 10s
+    lambda: |-
+      const float ppl = id(liw01_impulses_per_liter).state;
+      if (isnan(ppl) || ppl <= 0.0f)
+        return NAN;
+      return (double) id(liw01_hw).get_since_v020_liters() / (double) ppl;
+
+  - platform: template
+    name: "Initial meter baseline"
+    internal: true
+    unit_of_measurement: "L"
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: |-
+      return (double) id(liw01_hw).get_install_baseline_liters();
+
+  - platform: template
+    name: "HC590 raw"
+    internal: true
+    id: liw01_raw
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return (float) id(liw01_hw).get_raw();
+
+  - platform: template
+    name: "HC590 raw direct SPI1"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return (float) id(liw01_hw).get_raw_direct();
+
+  - platform: template
+    name: "C755 overflow count since boot"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return (float) id(liw01_hw).get_overflow_count();
+
+  - platform: template
+    name: "Raw rollover count V0.2"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_raw_rollover_count();
+
+  # Kept only as a diagnostic view. Around raw=255 it intentionally shows the
+  # previously observed transient 511-style phase and is NOT used for TOTAL math.
+  - platform: template
+    name: "Legacy HW32 diagnostic"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return (float) id(liw01_hw).get_hw32();
+
+  - platform: template
+    name: "Counter events"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_counter_event_count();
+
+  - platform: template
+    name: "Counter last delta"
+    internal: true
+    unit_of_measurement: "L"
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return (float) id(liw01_hw).get_counter_last_delta();
+
+  - platform: template
+    name: "Counter rejected deltas"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_counter_rejected_delta_count();
+
+  - platform: template
+    name: "Startup recovery count"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_startup_recovery_count();
+
+  - platform: template
+    name: "Startup ambiguous adopts"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_startup_ambiguous_adopt_count();
+
+  - platform: template
+    name: "Counter A-B retries"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_counter_ab_retry_count();
+
+  - platform: template
+    name: "Counter A-B unresolved"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_counter_ab_unresolved_count();
+
+  - platform: template
+    name: "raw=255 reads"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 10s
+    lambda: |-
+      return (float) id(liw01_hw).get_raw255_count();
+
+  - platform: template
+    name: "GPIO pad fault count"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 10s
+    lambda: |-
+      return (float) id(liw01_hw).get_gpio_pad_fault_count();
+
+  - platform: template
+    name: "FRAM V2 sequence"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_v2_sequence();
+
+  - platform: template
+    name: "FRAM V2 write count"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_v2_write_count();
+
+  - platform: template
+    name: "FRAM V2 write faults"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (float) id(liw01_hw).get_v2_write_fault_count();
+
+  - platform: template
+    name: "FRAM V2 last persisted total"
+    internal: true
+    unit_of_measurement: "L"
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return (double) id(liw01_hw).get_last_persisted_total();
+
+  - platform: template
+    name: "FRAM V2 unsaved delta"
+    internal: true
+    unit_of_measurement: "L"
+    entity_category: diagnostic
+    disabled_by_default: true
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return (double) id(liw01_hw).get_unsaved_delta();
+
+
+  - platform: template
+    name: "Local button last hold"
+    id: liw01_gpio5_last_hold
+    unit_of_measurement: "s"
+    entity_category: diagnostic
+    accuracy_decimals: 3
+    web_server:
+      sorting_group_id: web_group_local_button
+      sorting_weight: 10
+    update_interval: 2s
+    lambda: |-
+      return (double) id(liw01_gpio5_last_hold_ms) / 1000.0;
+
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 80
+    entity_category: diagnostic
+    update_interval: 60s
+
+  - platform: uptime
+    name: "Uptime"
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 90
+    entity_category: diagnostic
+    update_interval: 60s
+
+binary_sensor:
+
+  # V0.5.0 final physical local-service button.
+  # Electrical/input mode is the V0.4.2 RC2 FIELD-PASS mode.
+  - platform: gpio
+    id: liw01_gpio5_service_button
+    internal: true
+    use_interrupt: true
+    pin:
+      number: GPIO5
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    filters:
+      - delayed_on: 50ms
+      - delayed_off: 50ms
+    on_press:
+      - lambda: |-
+          id(liw01_gpio5_press_started_ms) = millis();
+    on_release:
+      # First action only classifies and publishes. No service action occurs
+      # until after release and after this classification completes.
+      - lambda: |-
+          const uint32_t hold_ms = millis() - id(liw01_gpio5_press_started_ms);
+          id(liw01_gpio5_last_hold_ms) = hold_ms;
+
+          const char *band = "IGNORED";
+          uint8_t code = 0;
+          if (hold_ms < 200U) {
+            band = "IGNORED";
+            code = 0;
+          } else if (hold_ms < 4000U) {
+            band = "SHORT";
+            code = 1;
+          } else if (hold_ms < 8000U) {
+            band = "CONFIG";
+            code = 2;
+          } else if (hold_ms < 15000U) {
+            band = "NETWORK";
+            code = 3;
+          } else {
+            band = "FACTORY";
+            code = 4;
+          }
+
+          id(liw01_gpio5_last_band_code) = code;
+          id(liw01_gpio5_last_band).publish_state(band);
+          ESP_LOGI("liw01_gpio5", "GPIO5 release hold=%u ms -> band=%s code=%u pending_factory=%s",
+                   static_cast<unsigned int>(hold_ms), band, static_cast<unsigned int>(code),
+                   id(liw01_gpio5_factory_confirm_pending) ? "YES" : "NO");
+
+      # If FACTORY is already pending, ONLY a SHORT press may confirm it.
+      # Any other band cancels the pending request and performs no other action.
+      - if:
+          condition:
+            lambda: |-
+              return id(liw01_gpio5_factory_confirm_pending);
+          then:
+            - if:
+                condition:
+                  lambda: |-
+                    return id(liw01_gpio5_last_band_code) == 1;
+                then:
+                  - lambda: |-
+                      id(liw01_gpio5_factory_confirm_pending) = false;
+                  - if:
+                      condition:
+                        lambda: |-
+                          return id(liw01_hw).get_v2_storage_ready() &&
+                                 id(liw01_hw).get_last_persist_ok() &&
+                                 id(liw01_hw).get_unsaved_delta() == 0ULL;
+                      then:
+                        - lambda: |-
+                            id(liw01_gpio5_last_action).publish_state("FACTORY_CONFIRMED_RESETTING_LOCAL_CONFIG");
+                            ESP_LOGW("liw01_gpio5",
+                                     "FACTORY confirmed by second SHORT; local ESPHome preferences reset; external FRAM TOTAL kept");
+                        - delay: 750ms
+                        - button.press: liw01_factory_reset_internal
+                      else:
+                        - lambda: |-
+                            id(liw01_gpio5_last_action).publish_state("FACTORY_REFUSED_FRAM_NOT_CLEAN");
+                            ESP_LOGE("liw01_gpio5",
+                                     "FACTORY confirmation refused: FRAM not ready/persist OK/clean");
+                else:
+                  - lambda: |-
+                      id(liw01_gpio5_factory_confirm_pending) = false;
+                      id(liw01_gpio5_last_action).publish_state("FACTORY_CONFIRM_CANCELLED");
+                      ESP_LOGW("liw01_gpio5",
+                               "FACTORY confirmation cancelled by non-SHORT follow-up; no other action executed");
+          else:
+            # Normal state-machine actions.
+            - if:
+                condition:
+                  lambda: |-
+                    return id(liw01_gpio5_last_band_code) == 0;
+                then:
+                  - lambda: |-
+                      id(liw01_gpio5_last_action).publish_state("IGNORED");
+            - if:
+                condition:
+                  lambda: |-
+                    return id(liw01_gpio5_last_band_code) == 1;
+                then:
+                  - lambda: |-
+                      id(liw01_gpio5_last_action).publish_state("SHORT_STATUS_ONLY");
+                      ESP_LOGI("liw01_gpio5", "SHORT -> status only; no reboot/write");
+            - if:
+                condition:
+                  lambda: |-
+                    return id(liw01_gpio5_last_band_code) == 2;
+                then:
+                  - lambda: |-
+                      id(liw01_gpio5_last_action).publish_state("CONFIG_RESTART");
+                      ESP_LOGW("liw01_gpio5", "CONFIG -> normal ESP restart in 1.5 s");
+                  - delay: 1500ms
+                  - button.press: liw01_restart_button
+            - if:
+                condition:
+                  lambda: |-
+                    return id(liw01_gpio5_last_band_code) == 3;
+                then:
+                  - lambda: |-
+                      id(liw01_gpio5_last_action).publish_state("NETWORK_WIFI_RECONNECT");
+                      ESP_LOGW("liw01_gpio5", "NETWORK -> Wi-Fi OFF 5 s then ON; no ESP reboot");
+                  - script.execute: liw01_gpio5_wifi_reconnect
+            - if:
+                condition:
+                  lambda: |-
+                    return id(liw01_gpio5_last_band_code) == 4;
+                then:
+                  - lambda: |-
+                      id(liw01_gpio5_factory_confirm_pending) = true;
+                      id(liw01_gpio5_last_action).publish_state("FACTORY_CONFIRM_PENDING_10S");
+                      ESP_LOGW("liw01_gpio5",
+                               "FACTORY long-hold -> ARM ONLY; second SHORT within 10 s required");
+                  - script.execute: liw01_gpio5_factory_confirm_timeout
+
+  - platform: template
+    name: "Local button factory confirmation pending"
+    id: liw01_gpio5_factory_pending_sensor
+    entity_category: diagnostic
+    web_server:
+      sorting_group_id: web_group_local_button
+      sorting_weight: 40
+    lambda: |-
+      return id(liw01_gpio5_factory_confirm_pending);
+
+  - platform: template
+    name: "Counter synchronized"
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 20
+    entity_category: diagnostic
+    lambda: |-
+      return id(liw01_hw).get_counter_synced();
+
+  - platform: template
+    name: "V0.2.1 +2L migration applied"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_v021_field_repair_applied();
+
+  - platform: template
+    name: "V0.2.3 migration evaluated"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_v023_migration_evaluated();
+
+  - platform: template
+    name: "FRAM V2 ready"
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 30
+    entity_category: diagnostic
+    lambda: |-
+      return id(liw01_hw).get_v2_storage_ready();
+
+  - platform: template
+    name: "FRAM V2 slot A valid"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_v2_slot_a_valid();
+
+  - platform: template
+    name: "FRAM V2 slot B valid"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_v2_slot_b_valid();
+
+  - platform: template
+    name: "FRAM V2 last persist OK"
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 40
+    entity_category: diagnostic
+    lambda: |-
+      return id(liw01_hw).get_last_persist_ok();
+
+  - platform: template
+    name: "C755 overflow pending"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_overflow_pending();
+
+  - platform: template
+    name: "HC590 CCLR inactive HIGH"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_hc590_cclr_high();
+
+  - platform: template
+    name: "HC165 SPI A-B equal"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_spi_ab_equal();
+
+  - platform: template
+    name: "GPIO mux and OE OK"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_gpio_mux_ok();
+
+  - platform: template
+    name: "FRAM original signature OK"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_fram_signature_ok();
+
+  - platform: template
+    name: "FRAM original MASTER valid"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_master_valid();
+
+  - platform: template
+    name: "FRAM original COPY valid"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    lambda: |-
+      return id(liw01_hw).get_copy_valid();
+
+  - platform: status
+    name: "Status"
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 10
+
+text_sensor:
+
+  - platform: template
+    name: "Local button last band"
+    id: liw01_gpio5_last_band
+    entity_category: diagnostic
+    icon: "mdi:gesture-tap-button"
+    web_server:
+      sorting_group_id: web_group_local_button
+      sorting_weight: 20
+    update_interval: never
+
+  - platform: template
+    name: "Local button last action"
+    id: liw01_gpio5_last_action
+    entity_category: diagnostic
+    icon: "mdi:gesture-tap-hold"
+    web_server:
+      sorting_group_id: web_group_local_button
+      sorting_weight: 30
+    update_interval: never
+
+  - platform: template
+    name: "Startup recovery state"
+    internal: true
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      return { id(liw01_hw).get_startup_recovery_state_text() };
+
+  - platform: template
+    name: "Production state"
+    internal: true
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      return { id(liw01_hw).get_production_state_text() };
+
+  - platform: template
+    name: "System health"
+    id: liw01_system_health
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 5
+    entity_category: diagnostic
+    icon: "mdi:check-decagram"
+    update_interval: 5s
+    lambda: |-
+      if (!id(liw01_hw).get_counter_synced() ||
+          !id(liw01_hw).get_v2_storage_ready() ||
+          !id(liw01_hw).get_last_persist_ok() ||
+          id(liw01_hw).get_v2_write_fault_count() != 0U ||
+          id(liw01_hw).get_unsaved_delta() != 0ULL) {
+        return { "FAULT" };
+      }
+      if (id(liw01_reset_arm).state ||
+          id(liw01_local_config_reset_arm).state ||
+          id(liw01_gpio5_factory_confirm_pending)) {
+        return { "WARNING - SERVICE ARMED" };
+      }
+      return { "OK" };
+
+  - platform: template
+    name: "FRAM V2 storage state"
+    web_server:
+      sorting_group_id: web_group_health
+      sorting_weight: 60
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      return { id(liw01_hw).get_v2_storage_state_text() };
+
+  - platform: template
+    name: "Original FRAM signature"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    update_interval: 60s
+    lambda: |-
+      return { id(liw01_hw).get_fram_signature_text() };
+
+  - platform: template
+    name: "Original FRAM MASTER total"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    update_interval: 60s
+    lambda: |-
+      return { id(liw01_hw).get_master_total_text() };
+
+  - platform: template
+    name: "Original FRAM COPY total"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    update_interval: 60s
+    lambda: |-
+      return { id(liw01_hw).get_copy_total_text() };
+
+  - platform: template
+    name: "FRAM full snapshot status"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    update_interval: 60s
+    lambda: |-
+      return { id(liw01_hw).get_fram_dump_status_text() };
+
+
+  - platform: template
+    name: "Web safety state"
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 10
+    id: liw01_web_safety_state
+    entity_category: diagnostic
+    icon: "mdi:shield-check"
+    update_interval: 2s
+    lambda: |-
+      if (id(liw01_reset_arm).state)
+        return { "COUNTER RESET ARMED - AUTO OFF 30s" };
+      if (id(liw01_local_config_reset_arm).state)
+        return { "LOCAL CONFIG RESET ARMED - AUTO OFF 30s" };
+      if (id(liw01_gpio5_factory_confirm_pending))
+        return { "LOCAL BUTTON FACTORY CONFIRM PENDING - SHORT PRESS WITHIN 10s" };
+      return { "SAFE - ALL DESTRUCTIVE ACTIONS DISARMED" };
+
+  - platform: template
+    name: "Service operation state"
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 20
+    id: liw01_service_operation_state
+    entity_category: diagnostic
+    update_interval: 10s
+    lambda: |-
+      return { id(liw01_hw).get_service_state_text() };
+
+
+number:
+  # Persistent display scaling. Default 1.0 preserves the field-proven LIW-01
+  # behavior 1 accepted HC590 pulse = 1 liter. Stored in ESPHome preferences;
+  # never changes golden counter/FRAM math.
+  - platform: template
+    name: "Impulses per liter"
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 25
+    id: liw01_impulses_per_liter
+    entity_category: config
+    icon: "mdi:pulse"
+    min_value: 0.001
+    max_value: 10000
+    step: 0.001
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 1.0
+
+  # Two-step service calibration. Editing this number alone changes nothing; the
+  # separate APPLY button below performs the atomic SET TOTAL transaction. The
+  # 10,000,000 L limit keeps every integer exactly representable by ESP8266 float.
+  - platform: template
+    name: "Service target total liters"
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 30
+    id: liw01_service_target_total
+    entity_category: config
+    min_value: 0
+    max_value: 10000000
+    step: 1
+    mode: box
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+
+button:
+  # V0.3.0 adds explicit service SET/RESET controls. They call one C++ transaction
+  # primitive, never clear HC590, and never touch original FRAM 0x000..0x035.
+  - platform: template
+    name: "APPLY Service SET TOTAL"
+    id: liw01_apply_set_total_button
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 40
+    entity_category: config
+    disabled_by_default: true
+    on_press:
+      - lambda: |-
+          const float requested_f = id(liw01_service_target_total).state;
+          if (isnan(requested_f) || requested_f < 0.0f) {
+            ESP_LOGE("liw01_service", "SET TOTAL refused: invalid target number");
+            return;
+          }
+          const uint64_t requested_l = static_cast<uint64_t>(requested_f + 0.5f);
+          id(liw01_hw).service_set_total_liters(requested_l);
+
+  - platform: template
+    name: "RESET COUNTER TO 0 - SERVICE"
+    id: liw01_reset_counter_button
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 60
+    entity_category: config
+    disabled_by_default: true
+    on_press:
+      - lambda: |-
+          if (!id(liw01_reset_arm).state) {
+            ESP_LOGW("liw01_web_guard", "RESET COUNTER refused: ARM switch is OFF");
+            return;
+          }
+          // Consume the arm BEFORE calling the destructive transaction.
+          id(liw01_reset_arm).turn_off();
+          id(liw01_hw).service_reset_counter();
+
+  - platform: template
+    name: "FRAM FULL SNAPSHOT READ ONLY"
+    internal: true
+    entity_category: diagnostic
+    disabled_by_default: true
+    on_press:
+      - lambda: |-
+          id(liw01_hw).dump_full_fram_readonly();
+
+  # Raw ESPHome preference erase is internal; only the guarded wrapper is exposed.
+  - platform: factory_reset
+    id: liw01_factory_reset_internal
+    internal: true
+
+  - platform: template
+    name: "RESET LOCAL CONFIG - KEEP TOTAL"
+    id: liw01_local_config_reset_button
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 80
+    entity_category: config
+    disabled_by_default: true
+    on_press:
+      - if:
+          condition:
+            switch.is_on: liw01_local_config_reset_arm
+          then:
+            # Consume ARM before the destructive action.
+            - switch.turn_off: liw01_local_config_reset_arm
+            - button.press: liw01_factory_reset_internal
+          else:
+            - lambda: |-
+                ESP_LOGW("liw01_web_guard", "LOCAL CONFIG RESET refused: ARM switch is OFF");
+
+  - platform: restart
+    name: "Restart LIW-01"
+    id: liw01_restart_button
+    web_server:
+      sorting_group_id: web_group_service
+      sorting_weight: 90
+    entity_category: diagnostic
+
+
+
+# ============================================================================
+# PREPARED OPTIONAL FEATURES - DEFAULT OFF / FULLY COMMENTED
+# ============================================================================
+#
+# A) OPTIONAL MQTT WRITABLE LAYER
+# -------------------------------
+# Add mqtt_broker / mqtt_username / mqtt_password to secrets.yaml, then uncomment.
+# Native API remains enabled. LOCAL CONFIG RESET is intentionally not exposed.
+#
+# mqtt:
+#   broker: !secret mqtt_broker
+#   username: !secret mqtt_username
+#   password: !secret mqtt_password
+#   discovery: false
+#   topic_prefix: "openliw01"
+#   on_message:
+#     - topic: openliw01/service/target_total_l
+#       then:
+#         - lambda: |-
+#             char *end = nullptr;
+#             const unsigned long long v = strtoull(x.c_str(), &end, 10);
+#             if (end == x.c_str() || *end != '\0' || v > 10000000ULL) {
+#               ESP_LOGW("liw01_mqtt", "Invalid target_total_l payload");
+#               return;
+#             }
+#             auto call = id(liw01_service_target_total).make_call();
+#             call.set_value((float) v);
+#             call.perform();
+#
+#     - topic: openliw01/service/apply_total
+#       payload: "APPLY"
+#       then:
+#         - button.press: liw01_apply_set_total_button
+#
+#     - topic: openliw01/service/reset_arm
+#       payload: "ARM"
+#       then:
+#         - switch.turn_on: liw01_reset_arm
+#
+#     - topic: openliw01/service/reset
+#       payload: "RESET"
+#       then:
+#         - button.press: liw01_reset_counter_button
+#
+#
+# B) GPIO5
+# ---------
+# GPIO5 is ACTIVE in V0.5.0 using the final release-only local-service state
+# machine above. Do not re-enable the historical commented observation block.
+#
+# ============================================================================
+# END PREPARED OPTIONAL FEATURES
+# ============================================================================

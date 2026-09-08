@@ -1,0 +1,18 @@
+# ESPHome secrets / local build output
+secrets.yaml
+.esphome/
+.pioenvs/
+.piolibdeps/
+.vscode/
+*.bin
+*.elf
+*.map
+*.log
+
+# Local evidence / reverse-engineering material deliberately not public
+private/
+evidence/
+photos/
+pcb/
+dumps/
+disassembly/
